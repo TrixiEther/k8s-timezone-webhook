@@ -107,6 +107,12 @@ func handleMutateTimezone(w http.ResponseWriter, r *http.Request) {
 	w.Write(mutated)
 }
 
+func sendError(err error, w http.ResponseWriter) {
+	log.Println(err)
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(w, "%s", err)
+}
+
 func main() {
     log.Println("Starting webhook server ...")
 
