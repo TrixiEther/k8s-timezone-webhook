@@ -53,16 +53,17 @@ func mutateTimezone(body []byte, verbose bool) ([]byte, error) {
 
         patchVolumeMounts := map[string]string{
             "op":    "add",
-            "path":  "/spec/volumeMounts",
+            "path":  "/spec/volumeMounts/1",
             "value": {"name": "timezone", "mountPath": "/etc/localtime"},
         }
         p = append(p, patchVolumeMounts)
 
         patchVolumes := map[string]string{
             "op":    "add",
-            "path":  "/spec/volumes",
+            "path":  "/spec/volumes/1",
             "value": {"name": "timezone", "hostPath": {"path": "/etc/localtime"}},
         }
+        p = append(p, patchVolumes)
 
 		// parse the []map into JSON
 		resp.Patch, err = json.Marshal(p)
