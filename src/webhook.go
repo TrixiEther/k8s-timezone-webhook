@@ -128,4 +128,5 @@ func main() {
         MaxHeaderBytes: 1 << 20, // 1048576
     }
 
+    s.ListenAndServe()
 }
