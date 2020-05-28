@@ -9,4 +9,4 @@ deps: mod
 	go get -v ./...
 
 mod:
-    go mod init github.com/$(OWNER)/$(MOD)
+	go mod init github.com/$(OWNER)/$(MOD)
