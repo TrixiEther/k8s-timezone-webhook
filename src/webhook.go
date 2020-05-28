@@ -5,7 +5,7 @@ import (
     "log"
     "io/ioutil"
     "net/http"
-    "time"
+    "github.com/gorilla/mux"
 
     "encoding/json"
     v1beta1 "k8s.io/api/admission/v1beta1"
@@ -135,16 +135,15 @@ func sendError(err error, w http.ResponseWriter) {
 func main() {
     log.Println("Starting webhook server ...")
 
-    mux := http.NewServeMux()
-    mux.HandleFunc("/mutateTimezone", handleMutateTimezone)
+    router := mux.NewRouter()
 
-    s := &http.Server{
-        Addr:           "8080",
-        Handler:        mux,
-        ReadTimeout:    10 * time.Second,
-        WriteTimeout:   10 * time.Second,
-        MaxHeaderBytes: 1 << 20, // 1048576
-    }
+    router.HandleFunc("/mutateTimezone", handleMutateTimezone)
+    router.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "Hello from GoLang!")
+    })
 
-    s.ListenAndServe()
+    http.Handle("/", router)
+    http.ListenAndServe(":8080", nil)
+
+    log.Println("Server shutdown...")
 }
