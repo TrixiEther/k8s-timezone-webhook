@@ -50,17 +50,24 @@ func mutateTimezone(body []byte, verbose bool) ([]byte, error) {
 		// tell K8S how it should modifiy it
 		p := []map[string]string{}
 
-        patchVolumeMounts := map[string]string{
-            "op":    "add",
-            "path":  "/spec/volumeMounts",
-            "value": {"name":"timezone","mountPath":"etc/local"},
-        }
-        p = append(p, patchVolumeMounts)
+		volumeMount := []corev1.VolumeMount{"timezone","true","/etc/localtime"}
 
-        patchVolumes := map[string]string{
-            "op":    "add",
-            "path":  "/spec/volumes",
-            "value": {"name":"timezone","hostPath":{"path":"/etc/localtime"}},
+        for i := range pod.Spec.Containers {
+            patch := patchOperation{
+                Op:    "add",
+                Path:  fmt.Sprintf("/spec/containers/%d/volumeMounts", i),
+                Value: volumeMount,
+            }
+            p = append(p, patch)
+        }
+
+        volumeSource := []corev1.VolumeSource{"/etc/localtime"}
+        volume := []corev1.Volume{"timezone",volumeSource}
+
+        patchVolumes := patchOperation{
+            Op:    "add",
+            Path:  "/spec/volumes",
+            Value: volume,
         }
         p = append(p, patchVolumes)
 
