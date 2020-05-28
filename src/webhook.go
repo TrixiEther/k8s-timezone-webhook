@@ -13,6 +13,12 @@ import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type patchOperation struct {
+    Op    string      `json:"op"`
+    Path  string      `json:"path"`
+    Value interface{} `json:"value,omitempty"`
+}
+
 // Mutate mutates
 func mutateTimezone(body []byte, verbose bool) ([]byte, error) {
 
@@ -48,26 +54,32 @@ func mutateTimezone(body []byte, verbose bool) ([]byte, error) {
 
 		// the actual mutation is done by a string in JSONPatch style, i.e. we don't _actually_ modify the object, but
 		// tell K8S how it should modifiy it
-		p := []map[string]string{}
+		var p []patchOperation
 
-		volumeMount := []corev1.VolumeMount{"timezone","true","/etc/localtime"}
+	volumeMount := corev1.VolumeMount{ Name:"timezone", ReadOnly: true, MountPath: "/etc/localtime"}
+
+        var value interface{}
+        value = volumeMount
 
         for i := range pod.Spec.Containers {
             patch := patchOperation{
                 Op:    "add",
                 Path:  fmt.Sprintf("/spec/containers/%d/volumeMounts", i),
-                Value: volumeMount,
+                Value: value,
             }
             p = append(p, patch)
         }
 
-        volumeSource := []corev1.VolumeSource{"/etc/localtime"}
-        volume := []corev1.Volume{"timezone",volumeSource}
+        hostPath := &corev1.HostPathVolumeSource{ Path: "/etc/localtime" }
+        volumeSource := corev1.VolumeSource{ HostPath: hostPath }
+        volume := corev1.Volume{ Name: "timezone", VolumeSource: volumeSource }
+        
+        value = volume
 
         patchVolumes := patchOperation{
             Op:    "add",
             Path:  "/spec/volumes",
-            Value: volume,
+            Value: value,
         }
         p = append(p, patchVolumes)
 
