@@ -3,7 +3,6 @@ package main
 import (
     "fmt"
     "log"
-    "html"
     "io/ioutil"
     "net/http"
     "time"
@@ -54,14 +53,14 @@ func mutateTimezone(body []byte, verbose bool) ([]byte, error) {
         patchVolumeMounts := map[string]string{
             "op":    "add",
             "path":  "/spec/volumeMounts/1",
-            "value": {"name": "timezone", "mountPath": "/etc/localtime"},
+            "value": {"name": "timezone"},
         }
         p = append(p, patchVolumeMounts)
 
         patchVolumes := map[string]string{
             "op":    "add",
             "path":  "/spec/volumes/1",
-            "value": {"name": "timezone", "hostPath": {"path": "/etc/localtime"}},
+            "value": {"name": "timezone"},
         }
         p = append(p, patchVolumes)
 
