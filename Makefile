@@ -1,12 +1,13 @@
 NAME = timezone-webhook
 OWNER = me
 MOD = timezone-webhook
+VERSION = v1.0
 
 deploy: docker
-	docker run -d -p 8080:8080 $(NAME):latest
+	docker run -d -p 8080:8080 $(NAME):$(VERSION)
 
 docker: app
-	docker build -t $(NAME) .
+	docker build -t $(NAME):$(VERSION) .
 
 app: deps
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o timezone-webhook ./src/webhook.go
