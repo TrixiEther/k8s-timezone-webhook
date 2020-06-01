@@ -1,18 +1,30 @@
 package main
 
 import (
-    "fmt"
+	"fmt"
+	"flag"
     "log"
     "io/ioutil"
     "net/http"
     "crypto/tls"
-    "github.com/gorilla/mux"
 
     "encoding/json"
     v1beta1 "k8s.io/api/admission/v1beta1"
     corev1 "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type WebhookServer struct {
+	server *http.Server
+}
+
+// Webhook Server parameters
+type WhSvrParameters struct {
+	port           int    // webhook server port
+	certFile       string // path to the x509 certificate for https
+	keyFile        string // path to the x509 private key matching `CertFile`
+	sidecarCfgFile string // path to sidecar injector configuration file
+}
 
 type patchOperation struct {
     Op    string      `json:"op"`
@@ -57,10 +69,10 @@ func mutateTimezone(body []byte, verbose bool) ([]byte, error) {
 		// tell K8S how it should modifiy it
 		var p []patchOperation
 
-	volumeMount := corev1.VolumeMount{ Name:"timezone", ReadOnly: true, MountPath: "/etc/localtime"}
+		volumeMount := corev1.VolumeMount{ Name:"timezone", ReadOnly: true, MountPath: "/etc/localtime"}
 
-        var value interface{}
-        value = volumeMount
+		var value interface{}
+		value = volumeMount
 
         for i := range pod.Spec.Containers {
             patch := patchOperation{
@@ -74,7 +86,7 @@ func mutateTimezone(body []byte, verbose bool) ([]byte, error) {
         hostPath := &corev1.HostPathVolumeSource{ Path: "/etc/localtime" }
         volumeSource := corev1.VolumeSource{ HostPath: hostPath }
         volume := corev1.Volume{ Name: "timezone", VolumeSource: volumeSource }
-        
+
         value = volume
 
         patchVolumes := patchOperation{
@@ -144,7 +156,7 @@ func main() {
 
     pair, err := tls.LoadX509KeyPair(parameters.certFile, parameters.keyFile)
     if err != nil {
-    	fmt.Fprintf("Failed to load key pair: %v", err)
+    	log.Println("Failed to load key pair")
     }
 
     whsvr := &WebhookServer{
@@ -163,7 +175,7 @@ func main() {
 
     go func() {
         if err := whsvr.server.ListenAndServeTLS("", ""); err != nil {
-            glog.Errorf("Failed to listen and serve webhook server: %v", err)
+            log.Println("Failed to listen and serve webhook server")
         }
     }()
 
